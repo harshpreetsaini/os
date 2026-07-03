@@ -1,0 +1,434 @@
+#!/usr/bin/env python3
+"""Luna OS Image Server - Web Dashboard"""
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luna Image Server - MPC Server</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: #f8fafc;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #10b981;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+        }
+
+        .section h2 {
+            color: #818cf8;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .api-endpoint {
+            display: flex;
+            align-items: center;
+            padding: 15px 18px;
+            background: #0f172a;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            border-left: 4px solid #6366f1;
+        }
+
+        .api-endpoint:hover {
+            background: #1e293b;
+            transform: translateX(8px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .method {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-right: 18px;
+            min-width: 70px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .method.get {
+            background: #10b981;
+            color: white;
+        }
+
+        .method.post {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .endpoint-info {
+            flex-grow: 1;
+        }
+
+        .endpoint-path {
+            font-family: 'Monaco', 'Menlo', monospace;
+            color: #e2e8f0;
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+
+        .endpoint-desc {
+            font-size: 0.95rem;
+            color: #94a3b8;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .data-display {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #6366f1;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .image-preview {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            .api-endpoint {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .method {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ Luna Image Server</h1>
+            <p>MPC (Model Context Protocol) Server for Image Operations</p>
+            <span class="status">Status: Running</span>
+        </div>
+
+        <div class="section">
+            <h2>📡 Available Endpoints</h2>
+
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/api/image/info - Get image metadata</div>
+                    <div class="endpoint-desc">Retrieve detailed information about the main image (filename, format, dimensions, size)</div>
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/api/image/view - View full-size image</div>
+                    <div class="endpoint-desc">Display the full-size version of the main image</div>
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/api/image - Get thumbnail</div>
+                    <div class="endpoint-desc">Retrieve a smaller thumbnail version (300x300 max) of the main image</div>
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/api/image/info/&lt;filename&gt; - Get metadata for uploaded image</div>
+                    <div class="endpoint-desc">Get metadata for images uploaded to the static directory</div>
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/api/images - List all uploaded images</div>
+                    <div class="endpoint-desc">Get a list of all images in the static directory with their metadata</div>
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method post">POST</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/api/image/upload - Upload an image</div>
+                    <div class="endpoint-desc">Upload an image file (PNG, JPG, JPEG, GIF, BMP, SVG) to the static directory</div>
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method post">POST</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/api/process/image - Process an image</div>
+                    <div class="endpoint-desc">Process images with operations like blur, resize, crop, filters, AI effects</div>
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/api/search/images - Search images</div>
+                    <div class="endpoint-desc">Search images by properties like format, size, filename pattern</div>
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method post">POST</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/api/compare/images - Compare two images</div>
+                    <div class="endpoint-desc">Compare two images and return similarity metrics and comparison data</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🖼️ Live Demo</h2>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="fetchImageInfo()">📊 Get Image Info</button>
+                <button class="action-btn" onclick="viewFullImage()">🔍 View Full Image</button>
+                <button class="action-btn" onclick="viewThumbnail()">🖼️ View Thumbnail</button>
+            </div>
+
+            <div id="image-info" class="data-display" style="display: none;">
+                <h3>Image Information</h3>
+                <pre id="info-content">Loading...</pre>
+            </div>
+
+            <div id="thumbnail-container" style="display: none; text-align: center;">
+                <h3>Thumbnail</h3>
+                <img id="thumbnail-img" class="image-preview" alt="Thumbnail">
+            </div>
+
+            <div id="full-image-container" style="display: none; text-align: center;">
+                <h3>Full Size Image</h3>
+                <img id="full-img" class="image-preview" alt="Full Size">
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📝 Server Details</h2>
+            <div class="data-display">
+                <pre>Service: Luna OS Image Server
+Version: 2.0.0
+Protocol: MPC (Model Context Protocol)
+Host: 127.0.0.1:5252
+Image Source: /workspace/os/IMG_8347.png
+Description: Full-featured image processing and management server</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading data...</p>
+                </div>
+            `;
+        }
+
+        function formatJson(data) {
+            return JSON.stringify(data, null, 2);
+        }
+
+        async function fetchImageInfo() {
+            try {
+                showLoading('info-content');
+                const response = await fetch('/api/image/info');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+
+                document.getElementById('info-content').textContent = formatJson(data);
+                document.getElementById('image-info').style.display = 'block';
+            } catch (error) {
+                document.getElementById('info-content').textContent = `Error: ${error.message}`;
+                document.getElementById('image-info').style.display = 'block';
+            }
+        }
+
+        async function viewThumbnail() {
+            try {
+                document.getElementById('thumbnail-container').style.display = 'none';
+                showLoading('thumbnail-img');
+
+                const response = await fetch('/api/image');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const blob = await response.blob();
+                const imgUrl = URL.createObjectURL(blob);
+
+                const img = document.getElementById('thumbnail-img');
+                img.onload = function() {
+                    document.getElementById('thumbnail-container').style.display = 'block';
+                };
+                img.src = imgUrl;
+            } catch (error) {
+                document.getElementById('thumbnail-container').innerHTML = `
+                    <div style="padding: 20px; color: #ef4444;">
+                        Error: ${error.message}
+                    </div>
+                `;
+                document.getElementById('thumbnail-container').style.display = 'block';
+            }
+        }
+
+        async function viewFullImage() {
+            try {
+                document.getElementById('full-image-container').style.display = 'none';
+                showLoading('full-img');
+
+                const response = await fetch('/api/image/view');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const blob = await response.blob();
+                const imgUrl = URL.createObjectURL(blob);
+
+                const img = document.getElementById('full-img');
+                img.onload = function() {
+                    document.getElementById('full-image-container').style.display = 'block';
+                };
+                img.src = imgUrl;
+            } catch (error) {
+                document.getElementById('full-image-container').innerHTML = `
+                    <div style="padding: 20px; color: #ef4444;">
+                        Error: ${error.message}
+                    </div>
+                `;
+                document.getElementById('full-image-container').style.display = 'block';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchImageInfo();
+        });
+    </script>
+</body>
+</html>
